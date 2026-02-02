@@ -4,353 +4,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Future Med Bot - AI Diagnostic Center</title>
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap');
-
-        :root {
-            --neon-blue: #00f2ff;
-            --neon-purple: #bc13fe;
-            --bg-dark: #050505;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: #e0e0e0;
-            font-family: 'Rajdhani', sans-serif;
-            overflow-x: hidden;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
+        :root { --neon-blue: #00f2ff; --neon-purple: #bc13fe; --bg-dark: #050505; }
+        body { background-color: var(--bg-dark); color: #e0e0e0; font-family: 'Rajdhani', sans-serif; height: 100vh; margin: 0; display: flex; flex-direction: column; overflow: hidden; }
         .orbitron { font-family: 'Orbitron', sans-serif; }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-        }
-
-        .gradient-text {
-            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .chat-bubble {
-            max-width: 85%;
-            padding: 14px 18px;
-            border-radius: 20px;
-            margin-bottom: 12px;
-            font-size: 1rem;
-            animation: fadeIn 0.3s ease-out;
-            word-wrap: break-word;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+        .gradient-text { background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 15px; margin-bottom: 10px; font-size: 0.95rem; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .bot-msg { background: rgba(0, 242, 255, 0.08); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
-        .user-msg { background: rgba(188, 19, 254, 0.08); border-right: 3px solid var(--neon-purple); align-self: flex-end; margin-left: auto; }
-
-        .page { display: none; animation: fadeIn 0.4s ease; height: 100%; width: 100%; padding: 16px; }
-        .page.active { display: flex; flex-direction: column; }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        .status-online { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
-        .status-offline { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-
-        #chat-window::-webkit-scrollbar { width: 4px; }
-        #chat-window::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .user-msg { background: rgba(188, 19, 254, 0.08); border-right: 3px solid var(--neon-purple); align-self: flex-end; }
+        .page { display: none; height: 100%; padding: 15px; flex-direction: column; }
+        .page.active { display: flex; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-offline { background: #ef4444; }
     </style>
 </head>
 <body>
 
-    <!-- Profil Sahifasi -->
-    <main id="profile-page" class="page">
-        <header class="flex justify-between items-center mb-6">
-            <button onclick="showPage('main-page')" class="text-gray-400 hover:text-white p-2">
-                <i class="fas fa-arrow-left text-xl"></i>
-            </button>
-            <h1 class="orbitron text-xl font-bold gradient-text">USER PROFILE</h1>
-            <div class="w-10"></div>
-        </header>
-        
-        <div class="glass-panel p-8 flex flex-col items-center text-center mb-6">
-            <div class="h-24 w-24 rounded-full border-2 border-cyan-500 p-1 mb-4 shadow-[0_0_15px_rgba(0,242,255,0.3)]">
-                <img id="user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Medical" class="rounded-full bg-cyan-900/30">
-            </div>
-            <input type="text" id="name-input" onchange="window.updateName(this.value)" placeholder="Ismingiz..." class="bg-transparent text-center text-2xl font-bold text-white outline-none border-b border-white/10 focus:border-cyan-500 w-full pb-2">
-            
-            <div class="w-full grid grid-cols-2 gap-4 mt-8">
-                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
-                    <p class="text-gray-500 text-[10px] uppercase tracking-widest">Tajriba Balli</p>
-                    <p id="total-score" class="text-2xl font-bold text-cyan-400">0</p>
-                </div>
-                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
-                    <p class="text-gray-500 text-[10px] uppercase tracking-widest">Maqomingiz</p>
-                    <p id="rank-display" class="text-lg font-bold text-purple-400">INTERN</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass-panel p-5 flex-grow overflow-hidden flex flex-col">
-            <h3 class="orbitron text-xs font-bold mb-4 text-gray-400 tracking-widest">GLOBAL RANKING</h3>
-            <div id="leaderboard" class="space-y-3 overflow-y-auto pr-1">
-                <!-- Liderlar jadvali -->
-            </div>
-        </div>
-    </main>
-
-    <!-- Asosiy Chat Sahifasi -->
+    <!-- Main Page -->
     <main id="main-page" class="page active">
-        <header class="w-full flex items-center justify-between mb-4">
-            <div class="flex flex-col">
-                <h1 class="orbitron text-xl font-bold gradient-text">MED-AI CORE</h1>
-                <div id="connection-status" class="text-[9px] flex items-center text-gray-500 uppercase tracking-tighter">
-                    <span class="status-dot status-offline"></span> Bog'lanish kutilmoqda...
-                </div>
+        <header class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="orbitron text-lg font-bold gradient-text">MED-AI CORE</h1>
+                <div id="status" class="text-[10px] text-gray-500 uppercase"><span class="status-dot status-offline"></span> Kutish...</div>
             </div>
-            <button onclick="showPage('profile-page')" class="h-10 w-10 rounded-full border border-cyan-500/50 flex items-center justify-center bg-cyan-500/10 hover:bg-cyan-500/20 shadow-lg">
+            <button onclick="showPage('profile-page')" class="w-10 h-10 rounded-full border border-cyan-500/30 flex items-center justify-center bg-cyan-500/10">
                 <i class="fas fa-user-md text-cyan-400"></i>
             </button>
         </header>
 
-        <div id="chat-window" class="glass-panel flex-grow p-4 overflow-y-auto flex flex-col space-y-3 mb-4">
-            <div class="chat-bubble bot-msg">Salom! Men Kelajak Tibbiyot Botiman. <br><br>• Kasallik belgilari haqida so'rang <br>• MRT/Rentgen tahlil qiling <br>• Tibbiy quizda qatnashib ball yig'ing</div>
+        <div id="chat-window" class="glass-panel flex-grow p-4 overflow-y-auto flex flex-col mb-4">
+            <div class="chat-bubble bot-msg">Tizim tayyor. Savolingizni yo'llang.</div>
         </div>
 
-        <div class="flex flex-col gap-3">
-            <div class="relative flex items-center gap-2 bg-white/5 p-2 rounded-2xl border border-white/10 focus-within:border-cyan-500/50 transition-all">
-                <input type="text" id="user-input" placeholder="Xabarni kiriting..." class="bg-transparent flex-grow outline-none py-2 px-3 text-white text-sm">
-                <button id="send-btn" class="bg-cyan-500 text-black font-bold h-10 w-12 rounded-xl flex items-center justify-center transition-transform active:scale-90">
+        <div class="space-y-2">
+            <div class="flex gap-2 bg-white/5 p-2 rounded-xl border border-white/10">
+                <input type="text" id="user-input" placeholder="Xabar..." class="bg-transparent flex-grow outline-none text-white px-2">
+                <button id="send-btn" class="bg-cyan-500 text-black w-10 h-10 rounded-lg flex items-center justify-center">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
-            
-            <div class="grid grid-cols-3 gap-2">
-                <button id="quiz-btn" class="glass-panel py-3 flex flex-col items-center gap-1 hover:bg-cyan-500/10 active:scale-95 transition-all">
-                    <i class="fas fa-brain text-cyan-400 text-lg"></i>
-                    <span class="text-[9px] font-bold uppercase">Quiz</span>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="document.getElementById('file-input').click()" class="glass-panel py-2 text-[11px] font-bold uppercase flex items-center justify-center gap-2">
+                    <i class="fas fa-camera"></i> MRT/Rentgen
                 </button>
-                <button id="mrt-btn" onclick="document.getElementById('mrt-upload').click()" class="glass-panel py-3 flex flex-col items-center gap-1 hover:bg-blue-500/10 active:scale-95 transition-all border-blue-500/30">
-                    <i class="fas fa-x-ray text-blue-400 text-lg"></i>
-                    <span class="text-[9px] font-bold uppercase">Rentgen/MRT</span>
-                    <input type="file" id="mrt-upload" class="hidden" accept="image/*" onchange="window.handleImageUpload(this)">
-                </button>
-                <button id="reset-btn" class="glass-panel py-3 flex flex-col items-center gap-1 hover:bg-red-500/10 active:scale-95 transition-all text-gray-500">
-                    <i class="fas fa-redo-alt text-sm"></i>
-                    <span class="text-[9px] font-bold uppercase">Reset</span>
+                <button id="quiz-btn" class="glass-panel py-2 text-[11px] font-bold uppercase flex items-center justify-center gap-2">
+                    <i class="fas fa-lightbulb"></i> Quiz
                 </button>
             </div>
+            <input type="file" id="file-input" class="hidden" accept="image/*">
+        </div>
+    </main>
+
+    <!-- Profile Page -->
+    <main id="profile-page" class="page">
+        <button onclick="showPage('main-page')" class="mb-4 text-gray-400"><i class="fas fa-arrow-left"></i> Orqaga</button>
+        <div class="glass-panel p-6 text-center">
+            <div class="w-20 h-20 bg-cyan-500/20 rounded-full mx-auto mb-4 flex items-center justify-center border border-cyan-500">
+                <i class="fas fa-user-nurse text-3xl text-cyan-400"></i>
+            </div>
+            <h2 id="user-name" class="orbitron text-xl font-bold mb-2">Mehmon</h2>
+            <p class="text-cyan-400 font-bold">XP: <span id="user-xp">0</span></p>
+        </div>
+        <div class="mt-4 glass-panel p-4 flex-grow overflow-y-auto">
+            <h3 class="orbitron text-xs mb-3 text-gray-500">LIDERLAR JADVALI</h3>
+            <div id="leaderboard" class="space-y-2"></div>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Telegram WebApp Obyekti
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.expand();
-            tg.ready();
-            tg.headerColor = "#050505";
-        }
-
-        // FIREBASE KONFIGURATSIYANGIZ (VS Code va GitHub uchun)
         const firebaseConfig = {
             apiKey: "AIzaSyB3PyASFMm0kmsfZ1m08pnSTTtdQM6HduU",
             authDomain: "medaibot.firebaseapp.com",
             projectId: "medaibot",
-            storageBucket: "medaibot.firebasestorage.app",
-            messagingSenderId: "1093589950084",
-            appId: "1:1093589950084:web:ee03113bcb7a09e0d36cd1",
-            measurementId: "G-GXB2N0DDXV"
+            appId: "1:1093589950084:web:ee03113bcb7a09e0d36cd1"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const analytics = getAnalytics(app);
-        const appId = 'medaibot';
-
+        const appId = "medaibot";
         let user = null;
-        let userData = { 
-            name: tg?.initDataUnsafe?.user?.first_name || "Mehmon", 
-            score: 0,
-            tgId: tg?.initDataUnsafe?.user?.id || null
-        };
+        let userData = { name: "Foydalanuvchi", score: 0 };
 
-        const statusEl = document.getElementById('connection-status');
+        const statusDot = document.querySelector('.status-dot');
+        const statusText = document.getElementById('status');
 
-        function setStatus(isOnline, text) {
-            const dot = statusEl.querySelector('.status-dot');
-            dot.className = `status-dot ${isOnline ? 'status-online' : 'status-offline'}`;
-            statusEl.childNodes[2].textContent = ` ${text}`;
-        }
-
-        // Avtorizatsiyani VS Code muhitiga moslashtiramiz
-        const initAuth = async () => {
-            try {
-                setStatus(false, "Sinxronizatsiya...");
-                
-                // VS Code/GitHub'da ishlatganda __initial_auth_token bo'lmasligi mumkin
-                // Shuning uchun har doim xavfsiz anonim kirishga tayyor turamiz
-                let customToken = null;
-                try {
-                    customToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                } catch(e) { /* ignore */ }
-                
-                if (customToken) {
-                    try {
-                        await signInWithCustomToken(auth, customToken);
-                    } catch (tokenError) {
-                        await signInAnonymously(auth);
-                    }
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Auth error:", error);
-                setStatus(false, "Firebase ulanish xatosi");
-            }
-        };
-
-        initAuth();
-
-        onAuthStateChanged(auth, (u) => {
-            user = u;
-            if (user) {
-                const label = tg?.initDataUnsafe?.user?.username || "FOYDALANUVCHI";
-                setStatus(true, "ONLAYN | " + label);
-                startDataListeners();
+        onAuthStateChanged(auth, async (u) => {
+            if (u) {
+                user = u;
+                statusDot.className = "status-dot status-online";
+                statusText.innerText = "Onlayn";
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data'));
+                if (snap.exists()) userData = snap.data();
+                updateUI();
+                loadLeaderboard();
             } else {
-                setStatus(false, "TIZIMGA KIRISH KERAK");
+                signInAnonymously(auth);
             }
         });
 
-        async function startDataListeners() {
-            if (!user) return;
-            
-            // Firebase collection path
-            const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-            try {
-                const snap = await getDoc(profileRef);
-                if (snap.exists()) {
-                    userData = { ...userData, ...snap.data() };
-                } else {
-                    await setDoc(profileRef, userData);
-                }
-                updateUI();
-            } catch (e) { console.error("Firebase read error:", e); }
-
-            const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-            onSnapshot(lbCol, (snap) => {
-                const list = [];
-                snap.forEach(d => list.push(d.data()));
-                list.sort((a, b) => (b.score || 0) - (a.score || 0));
-                
-                const html = list.slice(0, 10).map((p, i) => `
-                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5 transition-all hover:bg-white/10">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-bold text-gray-500 orbitron">#${i+1}</span>
-                            <span class="truncate font-medium text-sm">${p.name || 'Noma\'lum'}</span>
-                        </div>
-                        <span class="text-cyan-400 font-bold orbitron text-xs">${p.score || 0} XP</span>
-                    </div>
-                `).join('');
-                document.getElementById('leaderboard').innerHTML = html || "<p class='text-center text-gray-500 py-4 text-xs'>Hozircha ma'lumot yo'q</p>";
-            }, (err) => { console.error("Leaderboard error:", err); });
-        }
-
-        window.updateName = async (val) => {
-            if (!val || !user) return;
-            userData.name = val;
-            await saveToCloud();
-        };
-
-        async function saveToCloud() {
-            if (!user) return;
-            const uRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-            const lRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid);
-            try {
-                await setDoc(uRef, userData);
-                await setDoc(lRef, { name: userData.name, score: userData.score, uid: user.uid });
-                updateUI();
-            } catch (e) { console.error("Cloud sync failed:", e); }
-        }
-
         function updateUI() {
-            document.getElementById('total-score').innerText = userData.score || 0;
-            document.getElementById('name-input').value = userData.name;
-            const rank = userData.score >= 500 ? 'CHIEF DOCTOR' : (userData.score >= 200 ? 'SENIOR DOCTOR' : (userData.score >= 50 ? 'DOCTOR' : 'INTERN'));
-            document.getElementById('rank-display').innerText = rank;
+            document.getElementById('user-name').innerText = userData.name;
+            document.getElementById('user-xp').innerText = userData.score;
         }
 
-        // Gemini AI Konfiguratsiyasi
-        const apiKey = ""; // Runtime tomonidan taqdim etiladi
-        window.askAI = async (prompt, base64Image = null) => {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const contents = [{
-                parts: [
-                    { text: prompt },
-                    ...(base64Image ? [{ inlineData: { mimeType: "image/png", data: base64Image } }] : [])
-                ]
-            }];
-
-            try {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents,
-                        systemInstruction: { parts: [{ text: "Sen professionallikka intiluvchi tibbiy AI botisan. Foydalanuvchi bilan o'zbek tilida gaplash. Har doim javobingda bitta tibbiy maslahat ber. Agar foydalanuvchi savolga to'g'ri javob bersa yoki rasm yuklasa, javobing oxiriga '+10 XP' deb qo'sh." }] }
-                    })
+        function loadLeaderboard() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'), (snap) => {
+                let html = '';
+                snap.forEach(d => {
+                    const data = d.data();
+                    html += `<div class="flex justify-between text-sm p-2 bg-white/5 rounded"><span>${data.name}</span><span class="text-cyan-400">${data.score} XP</span></div>`;
                 });
-                const data = await res.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Tizim hozir band, keyinroq urinib ko'ring.";
-                
-                if (text.includes("+10 XP")) {
-                    userData.score = (userData.score || 0) + 10;
-                    saveToCloud();
-                    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                }
-                return text;
-            } catch (e) { return "AI xizmati bilan aloqa uzildi."; }
-        };
+                document.getElementById('leaderboard').innerHTML = html;
+            });
+        }
 
-        window.handleImageUpload = (input) => {
-            const file = input.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const base64 = e.target.result.split(',')[1];
-                addMsg("Tahlil uchun tasvir yuborildi...", 'user');
-                const loading = addMsg("AI tasvirni ko'rib chiqmoqda...", 'bot');
-                const res = await window.askAI("Tahlil qil:", base64);
-                loading.innerHTML = res.replace(/\n/g, '<br>');
-            };
-            reader.readAsDataURL(file);
-        };
+        // Gemini AI (API Key joylashni unutmang)
+        const geminiKey = ""; 
+        window.askAI = async (text, img = null) => {
+            if(!geminiKey) return "Tizimda API Key yo'q.";
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ contents: [{ parts: [{ text }] }] })
+                });
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (e) { return "Xatolik yuz berdi."; }
+        }
     </script>
 
     <script>
@@ -362,32 +154,23 @@
             document.getElementById(id).classList.add('active');
         };
 
-        function addMsg(txt, role) {
-            const d = document.createElement('div');
-            d.className = `chat-bubble ${role}-msg`;
-            d.innerHTML = txt.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-            chat.appendChild(d);
+        function addMsg(text, role) {
+            const div = document.createElement('div');
+            div.className = `chat-bubble ${role}-msg`;
+            div.innerText = text;
+            chat.appendChild(div);
             chat.scrollTop = chat.scrollHeight;
-            return d;
+            return div;
         }
 
         document.getElementById('send-btn').onclick = async () => {
-            const val = input.value.trim();
-            if (!val) return;
+            const val = input.value;
+            if(!val) return;
             addMsg(val, 'user');
             input.value = "";
-            const loading = addMsg("AI javob yozmoqda...", 'bot');
-            const res = await window.askAI(val);
-            loading.innerHTML = res.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            const botMsg = addMsg("...", 'bot');
+            botMsg.innerText = await window.askAI(val);
         };
-
-        document.getElementById('quiz-btn').onclick = async () => {
-            const loading = addMsg("Savol tayyorlanmoqda...", 'bot');
-            const res = await window.askAI("Tibbiy quiz savoli ber:");
-            loading.innerHTML = res.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-        };
-
-        document.getElementById('reset-btn').onclick = () => window.location.reload();
     </script>
 </body>
 </html>
