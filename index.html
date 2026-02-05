@@ -4,63 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Med-AI Core - Qoraqalpog‘iston Tibbiyot Instituti</title>
-    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap');
-
-        :root { 
-            --neon-blue: #00f2ff; 
-            --neon-purple: #bc13fe; 
-            --bg-dark: #050505; 
-        }
-
-        body { 
-            background-color: var(--bg-dark); 
-            color: #e0e0e0; 
-            font-family: 'Rajdhani', sans-serif; 
-            height: 100vh; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-        }
-
+        :root { --neon-blue: #00f2ff; --neon-purple: #bc13fe; --bg-dark: #050505; }
+        body { background-color: var(--bg-dark); color: #e0e0e0; font-family: 'Rajdhani', sans-serif; height: 100vh; margin: 0; display: flex; flex-direction: column; overflow: hidden; }
         .orbitron { font-family: 'Orbitron', sans-serif; }
         .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; }
         .gradient-text { background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
         .chat-bubble { max-width: 85%; padding: 14px 18px; border-radius: 20px; margin-bottom: 12px; font-size: 1rem; animation: fadeIn 0.3s ease-out; word-wrap: break-word; line-height: 1.4; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
         .bot-msg { background: rgba(0, 242, 255, 0.08); border-left: 3px solid var(--neon-blue); align-self: flex-start; }
         .user-msg { background: rgba(188, 19, 254, 0.08); border-right: 3px solid var(--neon-purple); align-self: flex-end; }
-
         .page { display: none; height: 100%; width: 100%; padding: 16px; flex-direction: column; }
         .page.active { display: flex; }
-
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         .status-online { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
         .status-offline { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-
         #chat-window::-webkit-scrollbar { width: 4px; }
         #chat-window::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 10px; }
-
         .typing-indicator::after { content: '...'; animation: typing 1.5s infinite; }
         @keyframes typing { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
     </style>
 </head>
 <body>
 
+    <!-- API Setup Screen -->
+    <div id="api-setup" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6 hidden">
+        <div class="glass-panel p-8 w-full max-w-sm border-cyan-500/30">
+            <h2 class="orbitron text-xl font-bold mb-4 text-cyan-400">Xavfsiz Kirish</h2>
+            <p class="text-xs text-gray-400 mb-6">Tizim ishlashi uchun Gemini API kalitini kiriting.</p>
+            <input type="password" id="gemini-key-input" placeholder="Gemini API Key" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl mb-6 outline-none focus:border-cyan-500 text-sm">
+            <button onclick="saveKeys()" class="w-full bg-gradient-to-r from-cyan-500 to-purple-500 text-black font-bold p-3 rounded-xl orbitron active:scale-95 transition">AKTIVLASHTIRISH</button>
+        </div>
+    </div>
+
     <!-- Profil Sahifasi -->
     <main id="profile-page" class="page">
         <header class="flex justify-between items-center mb-6">
             <button onclick="showPage('main-page')" class="text-gray-400 p-2"><i class="fas fa-arrow-left text-xl"></i></button>
             <h1 class="orbitron text-xl font-bold gradient-text">PROFIL</h1>
-            <div class="w-10"></div>
+            <button onclick="clearKeys()" class="text-red-500 text-[10px] orbitron">API RESET</button>
         </header>
         <div class="glass-panel p-8 flex flex-col items-center text-center mb-6">
             <div class="h-24 w-24 rounded-full border-2 border-cyan-500 p-1 mb-4 shadow-[0_0_15px_rgba(0,242,255,0.3)]">
@@ -69,7 +55,7 @@
             <input type="text" id="name-input" placeholder="Ismingiz..." class="bg-transparent text-center text-2xl font-bold text-white outline-none border-b border-white/10 focus:border-cyan-500 w-full pb-2">
             <div class="w-full grid grid-cols-2 gap-4 mt-8">
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
-                    <p class="text-gray-500 text-[10px] uppercase">Tajriba Balli</p>
+                    <p class="text-gray-500 text-[10px] uppercase">Ball</p>
                     <p id="total-score" class="text-2xl font-bold text-cyan-400">0</p>
                 </div>
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
@@ -97,7 +83,7 @@
         </header>
 
         <div id="chat-window" class="glass-panel flex-grow p-4 overflow-y-auto flex flex-col space-y-3 mb-4">
-            <div class="chat-bubble bot-msg">Salom! Qoraqalpog‘iston tibbiyot instituti sun'iy intellekt tizimi ishga tushdi. Tibbiy savolingizni yozing yoki tasvir yuklang.</div>
+            <div class="chat-bubble bot-msg">Salom! Tibbiy savolingizni yozing yoki tasvir yuklang.</div>
         </div>
 
         <div class="flex flex-col gap-3">
@@ -107,7 +93,7 @@
             </div>
             <div class="grid grid-cols-3 gap-2">
                 <button id="quiz-btn" class="glass-panel py-3 flex flex-col items-center gap-1 active:bg-cyan-500/10"><i class="fas fa-brain text-cyan-400 text-lg"></i><span class="text-[9px] font-bold">QUIZ</span></button>
-                <button onclick="document.getElementById('mrt-upload').click()" class="glass-panel py-3 flex flex-col items-center gap-1 border-blue-500/30 active:bg-blue-500/10"><i class="fas fa-x-ray text-blue-400 text-lg"></i><span class="text-[9px] font-bold">MRT/IMAGE</span><input type="file" id="mrt-upload" class="hidden" accept="image/*" onchange="window.handleImageUpload(this)"></button>
+                <button onclick="document.getElementById('mrt-upload').click()" class="glass-panel py-3 flex flex-col items-center gap-1 border-blue-500/30 active:bg-blue-500/10"><i class="fas fa-x-ray text-blue-400 text-lg"></i><span class="text-[9px] font-bold">IMAGE</span><input type="file" id="mrt-upload" class="hidden" accept="image/*" onchange="window.handleImageUpload(this)"></button>
                 <button id="reset-btn" onclick="location.reload()" class="glass-panel py-3 flex flex-col items-center gap-1 text-gray-500"><i class="fas fa-redo-alt text-sm"></i><span class="text-[9px] font-bold">RESTART</span></button>
             </div>
         </div>
@@ -116,9 +102,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Yangilangan Firebase Konfiguratsiyasi
+        // Firebase sozlamalari
         const firebaseConfig = {
             apiKey: "AIzaSyB3PyASFMm0kmsfZ1m08pnSTTtdQM6HduU",
             authDomain: "medaibot.firebaseapp.com",
@@ -128,81 +114,73 @@
             appId: "1:1093589950084:web:ee03113bcb7a09e0d36cd1",
             measurementId: "G-GXB2N0DDXV"
         };
+        const appId = "medaibot-app";
 
-        const appId = "medaibot-web-app"; // Shaxsiy App ID
-        const GROQ_API_KEY = "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";
-        const GEMINI_API_KEY = ""; // Canvas muhiti uchun bo'sh qoladi
-
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        // Firebase-ni ishga tushirish
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-
+        const tg = window.Telegram.WebApp;
+        
         let user = null;
         let userData = { name: tg.initDataUnsafe?.user?.first_name || "Mehmon", score: 0 };
+        let GEMINI_API_KEY = localStorage.getItem('med_gemini_key') || "";
 
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Auth Error:", err);
+        // API Key handlers
+        window.saveKeys = () => {
+            const gemini = document.getElementById('gemini-key-input').value.trim();
+            if (gemini) {
+                localStorage.setItem('med_gemini_key', gemini);
+                location.reload();
             }
         };
+        window.clearKeys = () => {
+            localStorage.removeItem('med_gemini_key');
+            location.reload();
+        };
+        if (!GEMINI_API_KEY) document.getElementById('api-setup').classList.remove('hidden');
 
+        // Auth
         onAuthStateChanged(auth, (u) => {
             if (u) {
                 user = u;
                 document.getElementById('connection-status').innerHTML = '<span class="status-dot status-online"></span> ONLAYN';
                 loadUserData();
             } else {
-                initAuth();
+                signInAnonymously(auth);
             }
         });
 
+        // Firestore Logic
         async function loadUserData() {
             if (!user) return;
             const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
             try {
                 const snap = await getDoc(docRef);
-                if (snap.exists()) {
-                    userData = snap.data();
-                } else {
-                    await setDoc(docRef, userData);
-                }
+                if (snap.exists()) userData = snap.data();
+                else await setDoc(docRef, userData);
                 updateUI();
-            } catch (e) { console.error("Data Load Error:", e); }
+            } catch (e) { console.error(e); }
 
             const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             onSnapshot(lbCol, (s) => {
                 const list = [];
                 s.forEach(d => list.push(d.data()));
                 renderLeaderboard(list);
-            }, (err) => console.error("LB Error:", err));
+            });
         }
 
         async function saveUserData() {
             if (!user) return;
             const uRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
             const lRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid);
-            try {
-                await setDoc(uRef, userData);
-                await setDoc(lRef, { name: userData.name, score: userData.score, uid: user.uid });
-                updateUI();
-            } catch (e) { console.error("Save Error:", e); }
+            await setDoc(uRef, userData);
+            await setDoc(lRef, { name: userData.name, score: userData.score, uid: user.uid });
+            updateUI();
         }
 
         function updateUI() {
             document.getElementById('total-score').innerText = userData.score;
             document.getElementById('name-input').value = userData.name;
-            const rankIdx = Math.min(Math.floor(userData.score / 100), 3);
-            document.getElementById('rank-display').innerText = ["INTERN", "DOCTOR", "SENIOR", "CHIEF"][rankIdx];
         }
 
         function renderLeaderboard(list) {
@@ -215,58 +193,21 @@
             `).join('');
         }
 
+        // AI Logic
         async function fetchAI(prompt, img = null) {
-            if (GEMINI_API_KEY) {
-                try {
-                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
-                    const res = await fetch(geminiUrl, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }, ...(img ? [{ inlineData: { mimeType: "image/png", data: img } }] : [])] }],
-                            systemInstruction: { parts: [{ text: "Sen professional o'zbek shifokorisan." }] }
-                        }) 
-                    });
-                    const data = await res.json();
-                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (text) return text;
-                } catch (e) { console.warn("Gemini Error, Groq-ga o'tilmoqda..."); }
-            }
-            return await fetchGroq(prompt);
-        }
-
-        async function fetchGroq(prompt) {
-            try {
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { "Authorization": `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        model: "llama3-70b-8192",
-                        messages: [{ role: "system", content: "Sen professional o'zbek shifokori kabi javob ber." }, { role: "user", content: prompt }]
-                    })
-                });
-                const data = await res.json();
-                return data.choices?.[0]?.message?.content || "Xatolik yuz berdi.";
-            } catch (e) { return "AI xizmati vaqtincha ishlamayapti."; }
-        }
-
-        window.handleImageUpload = (input) => {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const base64 = e.target.result.split(',')[1];
-                const loader = window.addMsg("Tahlil qilinmoqda...", 'bot');
-                loader.classList.add('typing-indicator');
-                const res = await fetchAI("Ushbu tasvirni tahlil qiling:", base64);
-                loader.classList.remove('typing-indicator');
-                loader.innerHTML = res.replace(/\n/g, '<br>');
-                userData.score += 20;
-                saveUserData();
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }, ...(img ? [{ inlineData: { mimeType: "image/png", data: img } }] : [])] }],
+                systemInstruction: { parts: [{ text: "Sen professional tibbiy AI yordamchisan." }] }
             };
-            reader.readAsDataURL(file);
-        };
+            try {
+                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                const data = await res.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Xatolik yuz berdi.";
+            } catch { return "API bilan bog'lanishda xatolik."; }
+        }
 
+        // Events
         window.addMsg = (txt, role) => {
             const d = document.createElement('div');
             d.className = `chat-bubble ${role}-msg`;
@@ -282,13 +223,15 @@
             document.getElementById(id).classList.add('active');
         };
 
-        document.getElementById('send-btn').onclick = async () => {
-            const inp = document.getElementById('user-input');
-            const val = inp.value.trim();
-            if (!val) return;
+        const sendBtn = document.getElementById('send-btn');
+        const userInput = document.getElementById('user-input');
+
+        sendBtn.onclick = async () => {
+            const val = userInput.value.trim();
+            if (!val || !GEMINI_API_KEY) return;
             addMsg(val, 'user');
-            inp.value = "";
-            const loader = addMsg("O'ylayapman...", 'bot');
+            userInput.value = "";
+            const loader = addMsg("...", 'bot');
             loader.classList.add('typing-indicator');
             const res = await fetchAI(val);
             loader.classList.remove('typing-indicator');
@@ -297,18 +240,32 @@
             saveUserData();
         };
 
+        window.handleImageUpload = (input) => {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64 = e.target.result.split(',')[1];
+                const loader = addMsg("Tahlil qilinmoqda...", 'bot');
+                loader.classList.add('typing-indicator');
+                const res = await fetchAI("Tahlil qil:", base64);
+                loader.classList.remove('typing-indicator');
+                loader.innerHTML = res;
+                userData.score += 20;
+                saveUserData();
+            };
+            reader.readAsDataURL(file);
+        };
+
         document.getElementById('quiz-btn').onclick = async () => {
             const loader = addMsg("Savol tayyorlanmoqda...", 'bot');
             loader.classList.add('typing-indicator');
             const res = await fetchAI("Menga bitta tibbiy quiz ber.");
             loader.classList.remove('typing-indicator');
-            loader.innerHTML = res.replace(/\n/g, '<br>');
+            loader.innerHTML = res;
         };
 
-        document.getElementById('name-input').onchange = (e) => {
-            userData.name = e.target.value;
-            saveUserData();
-        };
+        userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBtn.click(); });
     </script>
 </body>
 </html>
